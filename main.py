@@ -1,16 +1,29 @@
 import os
 import time
-import requests
+import threading
+from flask import Flask
 
-API_KEY = os.getenv("BITVAVO_API_KEY")
-API_SECRET = os.getenv("BITVAVO_API_SECRET")
+app = Flask(__name__)
 
-def simulate_trade():
-    print("Simulierter Trade läuft...")
-    print(f"Verwende API_KEY: {API_KEY[:4]}... (gekürzt für Sicherheit)")
-    print("→ Einstieg, Analyse, Ausstieg... Profit kalkuliert.")
-    print("Fertig. Warte auf nächsten Zyklus.\n")
+API_KEY = os.getenv("BITVAVO_API_KEY", "demo_key")
+API_SECRET = os.getenv("BITVAVO_API_SECRET", "demo_secret")
 
-while True:
-    simulate_trade()
-    time.sleep(60)  # Warte 1 Minute zwischen Zyklen
+@app.route("/")
+def index():
+    return f"Ghosttrade läuft mit API-Key {API_KEY[:4]}... (gekürzt)"
+
+def simulate_trading():
+    while True:
+        print("Simulierter Trade läuft...")
+        print(f"Verwende API_KEY: {API_KEY[:4]}... (gekürzt)")
+        print("→ Einstieg, Analyse, Ausstieg... Profit kalkuliert.\n")
+        time.sleep(60)
+
+if __name__ == "__main__":
+    # Starte Trading-Loop in separatem Thread
+    trading_thread = threading.Thread(target=simulate_trading)
+    trading_thread.daemon = True
+    trading_thread.start()
+
+    # Starte Webserver für Fly.io
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
